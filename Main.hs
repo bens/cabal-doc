@@ -9,7 +9,6 @@ import qualified Control.Monad.Trans.Cont            as Cont
 import qualified Control.Monad.Trans.Reader          as Reader
 import           Data.List                           (intersperse, sort)
 import           Data.Maybe                          (mapMaybe)
-import           Data.Monoid                         ((<>))
 import           Data.Version                        (Version)
 import qualified Distribution.InstalledPackageInfo   as DIPI
 import qualified Distribution.Package                as DP
@@ -57,13 +56,13 @@ buildArgs (title, deps) = Cont.ContT $ \k -> do
     $ \(tmp, h) -> flip Reader.runReaderT verbosity $ do
        let pkgName = takePkgName . DP.pkgName . DIPI.sourcePackageId
            formatLine dep infos =
-             "[" <> pkgName dep <> "] " <>
-             "<file://" <> unwords (map snd infos) <> "/index.html>"
+             "["++pkgName dep++"] " ++
+             "<file://"++unwords (map snd infos)++"/index.html>"
            outData = unlines . intersperse "" . sort
                    $ map (uncurry formatLine) deps
        liftIO $ IO.hPutStr h outData >> IO.hFlush h
-       k $ ["--title=" <> title, "--prologue=" <> tmp] <>
-           [ "--read-interface=" <> dir <> "," <> iface
+       k $ ["--title="++title, "--prologue="++tmp] ++
+           [ "--read-interface="++dir++","++iface
            | (iface,dir) <- concat (map snd deps)
            ]
 
@@ -86,7 +85,7 @@ invocation :: String -> FilePath -> Maybe Version -> [String]
 invocation docdir loc versM = DSPR.programInvocation configuredProgram
   where
     pname = DSPT.programName DSPB.haddockProgram
-    defaultArgs = ["--gen-contents", "--gen-index", "--odir=" <> docdir]
+    defaultArgs = ["--gen-contents", "--gen-index", "--odir="++docdir]
     configuredProgram =
       (DSPT.simpleConfiguredProgram pname (DSPT.FoundOnSystem loc))
         { DSPT.programVersion = versM
@@ -105,7 +104,7 @@ takePkgName (DP.PackageName name) = name
 
 mkTitle :: DSLBI.LocalBuildInfo -> String
 mkTitle buildInfo =
-  (prefix <>) . takePkgName . DP.pkgName $ DPD.package pkgDescr
+  (prefix++) . takePkgName . DP.pkgName $ DPD.package pkgDescr
   where
     prefix = "Dependencies for "
     pkgDescr = DSLBI.localPkgDescr buildInfo
