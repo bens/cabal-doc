@@ -63,7 +63,7 @@ buildArgs (title, deps) = Cont.ContT $ \k -> do
        liftIO $ IO.hPutStr h outData >> IO.hFlush h
        k $ ["--title="++title, "--prologue="++tmp] ++
            [ "--read-interface="++dir++","++iface
-           | (iface,dir) <- concat (map snd deps)
+           | (iface,dir) <- concatMap snd deps
            ]
 
 runHaddock :: FilePath -> [String] -> ContIO () ()
