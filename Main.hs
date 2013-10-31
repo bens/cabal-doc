@@ -8,7 +8,7 @@ import           Control.Monad.IO.Class              (liftIO)
 import qualified Control.Monad.Trans.Cont            as Cont
 import qualified Control.Monad.Trans.Reader          as Reader
 import           Data.List                           (intersperse, sort)
-import           Data.Maybe                          (mapMaybe)
+import           Data.Maybe                          (catMaybes, mapMaybe)
 import           Data.Version                        (Version)
 import qualified Distribution.InstalledPackageInfo   as DIPI
 import qualified Distribution.Package                as DP
@@ -42,8 +42,12 @@ main = Reader.runReaderT (Cont.runContT main' return) DV.verbose
 
 haddockInfos :: DIPI.InstalledPackageInfo -> ContIO r [HaddockInfo]
 haddockInfos pkgInfo = Cont.ContT $ \k -> do
-  let canonOf f = mapM Dir.canonicalizePath $ f pkgInfo
-  liftIO (zip <$> canonOf DIPI.haddockInterfaces <*> canonOf DIPI.haddockHTMLs)
+  let exists x = liftA2 (||) (Dir.doesFileExist x) (Dir.doesDirectoryExist x)
+      canonOf f = do
+        xs <- mapM (\x ->  (x,) <$> exists x) $ f pkgInfo
+        mapM (\(x,ex) -> if ex then Just <$> Dir.canonicalizePath x else return Nothing) xs
+  liftIO (fmap catMaybes $ liftA2 (zipWith (liftA2 (,)))
+          (canonOf DIPI.haddockInterfaces) (canonOf DIPI.haddockHTMLs))
     >>= k
 
 buildArgs :: (String, [(DIPI.InstalledPackageInfo, [HaddockInfo])])
@@ -69,7 +73,9 @@ buildArgs (title, deps) = Cont.ContT $ \k -> do
 runHaddock :: FilePath -> [String] -> ContIO () ()
 runHaddock docdir args = Cont.ContT $ \_ -> do
   verbosity <- Reader.ask
-  let getLoc = liftIO $ DSPT.programFindLocation DSPB.haddockProgram verbosity
+  let getLoc = liftIO $ DSPT.programFindLocation DSPB.haddockProgram
+                                                 verbosity
+                                                 [DSPT.ProgramSearchPathDefault]
       getVer = liftIO . DSPT.programFindVersion  DSPB.haddockProgram verbosity
       noHaddock = liftIO $ ioError $ userError "haddock not found"
   getLoc >>= maybe noHaddock (\l -> do

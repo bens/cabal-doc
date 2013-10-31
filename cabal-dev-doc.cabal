@@ -16,7 +16,7 @@ executable cabal-dev-doc
   -- other-modules:
   build-depends:
       base      == 4.6.*
-    , Cabal     == 1.16.*
+    , Cabal     == 1.18.*
     , directory == 1.2.*
     , filepath  == 1.3.*
     , transformers >= 0.3
