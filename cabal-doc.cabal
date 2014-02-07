@@ -1,4 +1,4 @@
-name:                cabal-dev-doc
+name:                cabal-doc
 version:             0.1.0.0
 synopsis:            Generate a haddock documentation index for your project's dependencies
 -- description:
@@ -6,12 +6,12 @@ license:             BSD3
 license-file:        LICENSE
 author:              Ben Sinclair
 maintainer:          ben.d.sinclair@gmail.com
-copyright:           Ben Sinclair, 2013
+copyright:           Ben Sinclair, 2013,2014
 category:            Development
 build-type:          Simple
 cabal-version:       >=1.18
 
-executable cabal-dev-doc
+executable cabal-doc
   main-is: Main.hs
   -- other-modules:
   build-depends:
